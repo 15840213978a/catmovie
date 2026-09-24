@@ -3,6 +3,8 @@ name: build and release
 on:
   workflow_dispatch:
   push:
+    branches:
+      - dev
     tags:
       - "release-v*"
 
