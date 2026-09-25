@@ -2,6 +2,11 @@
 name: build and release
 on:
   workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Version without release-v (for example, 2.5.0)'
+        required: true
+        type: string
   pull_request:
     branches:
       - dev
@@ -16,6 +21,7 @@ permissions:
 
 env:
   FLUTTER_VERSION: 3.32.4
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && format('release-v{0}', inputs.release_version) || github.ref_name }}
   LINUX_DEPENDENCIES: git wget unzip python3 zip xz-utils curl clang cmake ninja-build pkg-config libgtk-3-dev libblkid-dev liblzma-dev libjsoncpp-dev cmake-data libjsoncpp25 libsecret-1-dev libsecret-1-0 librhash0 libsqlite3-dev libappindicator3-dev gettext libwebkit2gtk-4.1-dev libasound2-dev libmpv-dev mpv
 
 jobs:
@@ -24,6 +30,15 @@ jobs:
     runs-on: windows-2022
 
     steps:
+      - name: Validate manual release
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if ($env:GITHUB_REF -ne 'refs/heads/dev') {
+            throw 'Select the dev branch for a manual release'
+          }
+          if ($env:RELEASE_TAG -notmatch '^release-v[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$') {
+            throw "Invalid release tag: $env:RELEASE_TAG"
+          }
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
         with:
@@ -39,11 +54,11 @@ jobs:
           flutter test
           # dart run script/add_builtin.dart > lib/builtin/maccms/maccms.dart
       - name: Apply release version
-        if: startsWith(github.ref, 'refs/tags/release-v')
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/release-v')
         run: |
           $ErrorActionPreference = "Stop"
           $PSNativeCommandUseErrorActionPreference = $true
-          $env:version = "${{ github.ref_name }}" -replace "^release-v", ""
+          $env:version = $env:RELEASE_TAG -replace "^release-v", ""
           if ($env:version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$') {
             throw "Invalid release version: $env:version"
           }
@@ -69,7 +84,7 @@ jobs:
           path: build/windows/x64/runner/Release/catmovie-windows.zip
 
   build-linux:
-    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/release-v')
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev')
     runs-on: ubuntu-22.04
 
     env:
@@ -92,9 +107,9 @@ jobs:
       - name: Install dependencies
         run: sudo apt update && sudo apt-get install -y ${{ env.LINUX_DEPENDENCIES }}
       - name: Apply release version
-        if: startsWith(github.ref, 'refs/tags/release-v')
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/release-v')
         run: |
-          export version="${GITHUB_REF_NAME#release-v}"
+          export version="${RELEASE_TAG#release-v}"
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
             echo "Invalid release version: $version" >&2
             exit 1
@@ -121,7 +136,7 @@ jobs:
     needs:
       - build-windows
       - build-linux
-    if: github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/release-v')
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev')
     runs-on: macos-latest
     steps:
       - uses: maxim-lobanov/setup-xcode@v1
@@ -145,9 +160,9 @@ jobs:
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs
       - name: Apply release version
-        if: startsWith(github.ref, 'refs/tags/release-v')
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/release-v')
         run: |
-          export version="${GITHUB_REF_NAME#release-v}"
+          export version="${RELEASE_TAG#release-v}"
           if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
             echo "Invalid release version: $version" >&2
             exit 1
@@ -214,19 +229,24 @@ jobs:
           test "${{ steps.android_build.outcome }} ${{ steps.ios_build.outcome }} ${{ steps.macos_build.outcome }}" = "success success success"
 
       - uses: actions/download-artifact@v4
-        if: startsWith(github.ref, 'refs/tags/release-v')
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/release-v')
         with:
           name: windows
       - uses: actions/download-artifact@v4
-        if: startsWith(github.ref, 'refs/tags/release-v')
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/release-v')
         with:
           name: x86_64_linux
 
       - uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/release-v')
+        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/release-v')
         with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
           prerelease: false
+          fail_on_unmatched_files: true
+          body: |
+            Android APK 使用调试签名；iOS IPA 未签名，安装前需要自行签名；macOS 包未公证。
           files: |
             catmovie-windows.zip
             catmovie-linux-x86_64.tar.gz
