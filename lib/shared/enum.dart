@@ -64,8 +64,6 @@ enum SettingsAllKey {
   mirrorTextarea,
   /// 是否已经提示过免责声明
   showPlayTips,
-  /// webview 启动的服务类型
-  webviewPlayType,
   /// 首次启动
   onBoardingShowed,
 }

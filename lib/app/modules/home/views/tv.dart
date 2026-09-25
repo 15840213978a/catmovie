@@ -15,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
-import 'package:hide_cursor/hide_cursor.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:pull_down_button/pull_down_button.dart';
@@ -23,6 +22,8 @@ import 'package:smooth_list_view/smooth_list_view.dart';
 import 'package:tuple/tuple.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:xi/xi.dart';
+
+const _kAutoHideCursorDuration = Duration(seconds: 3);
 
 // https://github.com/hoangnx2204/m3u_utils
 class M3uUtils {
@@ -396,19 +397,30 @@ class TVUIState extends State<TVUI>
   final focusNode = FocusNode();
 
   Timer? _autoHideCursorTimer;
+  bool _cursorHidden = false;
+
+  void _showCursor() {
+    if (!mounted || !_cursorHidden) return;
+    setState(() => _cursorHidden = false);
+  }
+
+  void _hideCursor() {
+    if (!mounted || _cursorHidden) return;
+    setState(() => _cursorHidden = true);
+  }
 
   void autoHideCursor() {
     if (GetPlatform.isMobile) return;
     _autoHideCursorTimer?.cancel();
-    _autoHideCursorTimer = Timer(kAutoHideCursorDuration, () {
-      hideCursor.hideCursor();
+    _autoHideCursorTimer = Timer(_kAutoHideCursorDuration, () {
+      _hideCursor();
     });
   }
 
   void hijackAutoHideCursor(dynamic _) {
     if (GetPlatform.isMobile) return;
     _autoHideCursorTimer?.cancel();
-    hideCursor.showCursor();
+    _showCursor();
     bool hasDrawer = scaffoldKey.currentState?.hasDrawer ?? false;
     if (showVideoControls || hasDrawer) {
       return;
@@ -470,10 +482,10 @@ class TVUIState extends State<TVUI>
 
   @override
   void dispose() async {
+    _autoHideCursorTimer?.cancel();
     _playPauseIconTimer?.cancel();
     await player.dispose();
     if (GetPlatform.isDesktop) {
-      hideCursor.showCursor();
       windowManager.removeListener(this);
     }
     super.dispose();
@@ -490,7 +502,6 @@ class TVUIState extends State<TVUI>
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) {
     initData();
-    if (GetPlatform.isDesktop) hideCursor.showCursor();
     focusNode.requestFocus();
   }
 
@@ -848,7 +859,7 @@ class TVUIState extends State<TVUI>
             onTap: () {
               if (GetPlatform.isDesktop) {
                 _autoHideCursorTimer?.cancel();
-                hideCursor.showCursor();
+                _showCursor();
               }
               var next = !showVideoControls;
               showVideoControls = next;
@@ -860,7 +871,7 @@ class TVUIState extends State<TVUI>
             onDoubleTap: () async {
               if (GetPlatform.isDesktop) {
                 _autoHideCursorTimer?.cancel();
-                hideCursor.showCursor();
+                _showCursor();
               }
               _showPlayPauseIconForDuration();
               state.widget.controller.player.playOrPause();
@@ -1229,7 +1240,7 @@ class TVUIState extends State<TVUI>
           } else {
             if (GetPlatform.isDesktop) {
               _autoHideCursorTimer?.cancel();
-              hideCursor.showCursor();
+              _showCursor();
             }
           }
         },
@@ -1528,11 +1539,14 @@ class TVUIState extends State<TVUI>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        _buildBody(),
-        _buildDesktopCTRL(),
-      ],
+    return MouseRegion(
+      cursor: _cursorHidden ? SystemMouseCursors.none : MouseCursor.defer,
+      child: Stack(
+        children: [
+          _buildBody(),
+          _buildDesktopCTRL(),
+        ],
+      ),
     );
   }
 }

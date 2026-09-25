@@ -30,7 +30,6 @@ dependencies:
   wakelock_plus: ^1.3.2
   url_launcher: ^6.3.1
   flutter_slidable: ^4.0.0
-  auto_injector: ^2.1.1
   settings_ui: ^2.0.2
 
   waterfall_flow: ^3.1.1
@@ -52,26 +51,8 @@ dependencies:
   xi:
     path: packages/xi
 
-  hide_cursor:
-    git:
-      url: https://github.com/waifu-project/hide_cursor
-      branch: main
-      ref: 33643d93803c09455445389ad57b1da880cd04aa
-  desktop_webview_window:
-    git:
-      url: https://github.com/waifu-project/flutter-plugins
-      branch: webview_window_icon
-      ref: 474e50a7aa29e5624dcb54f446bce57050f6a49f
-      path: packages/desktop_webview_window
-  command_palette:
-    git:
-      url: https://github.com/d1y/command_palette
-      branch: d1y
-      ref: c9cf207fccd07ecaa6de0f7ea898046ffa26ff3a
-  webplayer_embedded:
-    git:
-      url: https://github.com/d1y/webplayer_embedded
-      ref: 1d78923edd091b90d362ce9587aacf8ce83a93fa
+  desktop_webview_window: 0.3.0
+  command_palette: 0.7.6
   bitsdojo_window:
     git:
       url: https://github.com/bitsdojo/bitsdojo_window
@@ -115,6 +96,8 @@ dependencies:
   markdown_widget: ^2.3.2+8
 
 dev_dependencies:
+  flutter_test:
+    sdk: flutter
   flutter_lints: ^6.0.0
 
   flutter_launcher_name:
