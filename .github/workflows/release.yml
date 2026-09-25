@@ -229,18 +229,26 @@ jobs:
           test "${{ steps.android_build.outcome }} ${{ steps.ios_build.outcome }} ${{ steps.macos_build.outcome }}" = "success success success"
 
       - uses: actions/download-artifact@v4
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/release-v')
+        if: github.event_name != 'pull_request'
         with:
           name: windows
       - uses: actions/download-artifact@v4
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/release-v')
+        if: github.event_name != 'pull_request'
         with:
           name: x86_64_linux
 
+      - name: Name dev release
+        id: dev_release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        run: |
+          version="$(sed -n 's/^version:[[:space:]]*//p' pubspec.yaml | head -n 1)"
+          [[ -n "$version" ]] || { echo 'Missing version in pubspec.yaml' >&2; exit 1; }
+          echo "tag=release-v${version%%+*}+${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+
       - uses: softprops/action-gh-release@v2
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/release-v')
+        if: github.event_name != 'pull_request'
         with:
-          tag_name: ${{ env.RELEASE_TAG }}
+          tag_name: ${{ steps.dev_release.outputs.tag || env.RELEASE_TAG }}
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
           prerelease: false
