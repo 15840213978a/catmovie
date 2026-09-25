@@ -1,6 +1,5 @@
 import 'package:isar_community/isar.dart';
 import 'package:catmovie/shared/enum.dart';
-import 'package:webplayer_embedded/webplayer_embedded.dart';
 
 part 'settings_schema.g.dart';
 
@@ -30,6 +29,4 @@ class SettingsIsarModel {
   // 启动时是否显示引导页面
   bool onBoardingShowed = false;
 
-  @Enumerated(EnumType.ordinal)
-  IWebPlayerEmbeddedType webviewPlayType = IWebPlayerEmbeddedType.p2pHLS;
 }

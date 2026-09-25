@@ -1,4 +1,3 @@
-import 'package:command_palette/command_palette.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -21,6 +20,8 @@ import 'package:window_manager/window_manager.dart';
 import 'package:xi/xi.dart';
 
 const kSmoothListViewDuration = Duration(milliseconds: 210);
+
+enum TabSwitchDirection { left, right }
 
 const kAllCategoryPoint = '-114514';
 var kAllCategoryData = SourceSpiderQueryCategory('全部', kAllCategoryPoint);

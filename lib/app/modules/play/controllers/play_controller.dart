@@ -1,7 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
+import 'package:catmovie/app/modules/play/playback_route.dart';
 import 'package:catmovie/app/modules/play/views/chewie_view.dart';
 import 'package:catmovie/app/modules/play/views/play_view.dart';
 import 'package:desktop_webview_window/desktop_webview_window.dart';
@@ -14,12 +13,10 @@ import 'package:catmovie/app/extension.dart';
 import 'package:catmovie/app/modules/home/controllers/home_controller.dart';
 import 'package:catmovie/app/modules/home/views/source_help.dart';
 import 'package:catmovie/app/modules/play/views/webview_view.dart';
-import 'package:catmovie/shared/auto_injector.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:xi/xi.dart';
 import 'package:catmovie/isar/schema/parse_schema.dart';
 import 'package:catmovie/shared/enum.dart';
-import 'package:webplayer_embedded/webplayer_embedded.dart';
 
 // 延迟注入播放列表的时间
 const kDelayExecInjectPlaylistJSCode = Duration(seconds: 1);
@@ -103,8 +100,6 @@ String easyGenParseVipUrl(String raw, ParseIsarModel model) {
 class PlayController extends GetxController {
   VideoDetail movieItem = Get.arguments;
 
-  WebPlayerEmbedded webPlayerEmbedded = autoInjector.get<WebPlayerEmbedded>();
-
   HomeController home = Get.find<HomeController>();
 
   ISpiderAdapter get currentMovieInstance {
@@ -159,19 +154,6 @@ class PlayController extends GetxController {
   }
 
   String playTips = "";
-
-  HttpServer? _httpServerContext;
-
-  String url2Iframe(String realUrl, HttpServer server) {
-    var type = getSettingAsKeyIdent<IWebPlayerEmbeddedType>(
-      SettingsAllKey.webviewPlayType,
-    );
-    if (realUrl.endsWith(".m3u8")) {
-      return webPlayerEmbedded.generatePlayerUrl(type, realUrl);
-    }
-    var port = server.port;
-    return "http://localhost:$port/assets/iframe.html?url=$realUrl";
-  }
 
   Future<String> injectPlaylistJSCode(
     List<VideoInfo> playlist,
@@ -268,29 +250,6 @@ document.addEventListener('DOMContentLoaded', function() {
       webview.evaluateJavaScript("setActiveWithPlaylist(`${curr.url}`)");
     }
 
-    void updatePlayStateWithUrl(String url) {
-      int index = playList.indexWhere(
-        (item) => item.url == url,
-      );
-      if (index >= 0) {
-        updatePlayState(tabIndex, index);
-      }
-    }
-
-    /// `MP4` 理论上来说不需要操作就可以直接喂给浏览器?
-    if (!(await webPlayerEmbedded.checkRunning())) {
-      _httpServerContext = await webPlayerEmbedded.createServer(
-        onMessage: (msg) {
-          String value = jsonDecode(msg.value);
-          switch (msg.type) {
-            case "switchVideo":
-              updatePlayStateWithUrl(value);
-          }
-        },
-      );
-    }
-
-    url = url2Iframe(url, _httpServerContext!);
     debugPrint("webview url: $url");
     // NOTE(d1y): linux 不支持?
     webview.launch(url);
@@ -305,11 +264,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // }
 
     webview.setOnUrlRequestCallback((newUrl) {
-      updatePlayStateWithUrl(newUrl);
-      Future.delayed(kDelayExecInjectPlaylistJSCode, () async {
-        var curr = playList.firstWhere((element) => element.url == newUrl);
-        setWebviewActivePlay(curr);
-      });
+      final index = playList.indexWhere((item) => item.url == newUrl);
+      if (index >= 0) {
+        updatePlayState(tabIndex, index);
+        Future.delayed(kDelayExecInjectPlaylistJSCode, () async {
+          setWebviewActivePlay(playList[index]);
+        });
+      }
       return true;
     });
 
@@ -389,6 +350,10 @@ document.addEventListener('DOMContentLoaded', function() {
     switch (videoKernel) {
       case VideoKernel.webview:
         if (GetPlatform.isDesktop) {
+          if (selectDesktopPlayback(curr.type, url) == DesktopPlayback.mediaKit) {
+            await mediaKitPlayer.open(Media(url));
+            return true;
+          }
           return await playWithWebview(playList, curr, url);
         } else {
           if (GetPlatform.isAndroid) {

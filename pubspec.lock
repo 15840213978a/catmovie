@@ -54,14 +54,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.13.0"
-  auto_injector:
-    dependency: "direct main"
-    description:
-      name: auto_injector
-      sha256: "1fc2624898e92485122eb2b1698dd42511d7ff6574f84a3a8606fc4549a1e8f8"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.1"
   awesome_dio_interceptor:
     dependency: transitive
     description:
@@ -290,11 +282,10 @@ packages:
   command_palette:
     dependency: "direct main"
     description:
-      path: "."
-      ref: c9cf207fccd07ecaa6de0f7ea898046ffa26ff3a
-      resolved-ref: c9cf207fccd07ecaa6de0f7ea898046ffa26ff3a
-      url: "https://github.com/d1y/command_palette"
-    source: git
+      name: command_palette
+      sha256: b15a9befccdc1fd0fa9c40e8c6449ccd8d4784b57916bb62e8a4b4a7fb398dbf
+      url: "https://pub.dev"
+    source: hosted
     version: "0.7.6"
   concurrent_queue:
     dependency: "direct main"
@@ -387,12 +378,11 @@ packages:
   desktop_webview_window:
     dependency: "direct main"
     description:
-      path: "packages/desktop_webview_window"
-      ref: "474e50a7aa29e5624dcb54f446bce57050f6a49f"
-      resolved-ref: "474e50a7aa29e5624dcb54f446bce57050f6a49f"
-      url: "https://github.com/waifu-project/flutter-plugins"
-    source: git
-    version: "0.2.4"
+      name: desktop_webview_window
+      sha256: b6fdae2cbf9571879b1761c12f27facaf82e22d0bdc74d049907c2a09a432957
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.0"
   dio:
     dependency: "direct main"
     description:
@@ -612,15 +602,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.3.2"
-  hide_cursor:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: "33643d93803c09455445389ad57b1da880cd04aa"
-      resolved-ref: "33643d93803c09455445389ad57b1da880cd04aa"
-      url: "https://github.com/waifu-project/hide_cursor"
-    source: git
-    version: "0.0.3"
   highlight:
     dependency: transitive
     description:
@@ -1666,15 +1647,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.3"
-  webplayer_embedded:
-    dependency: "direct main"
-    description:
-      path: "."
-      ref: "1d78923edd091b90d362ce9587aacf8ce83a93fa"
-      resolved-ref: "1d78923edd091b90d362ce9587aacf8ce83a93fa"
-      url: "https://github.com/d1y/webplayer_embedded"
-    source: git
-    version: "0.0.1"
   webview_flutter:
     dependency: "direct main"
     description:

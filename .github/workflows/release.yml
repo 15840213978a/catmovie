@@ -2,6 +2,9 @@
 name: build and release
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - dev
   push:
     branches:
       - dev
@@ -33,7 +36,14 @@ jobs:
           ./script/fetch_git_info.ps1
           flutter pub get
           dart run build_runner build --delete-conflicting-outputs
+          flutter test
           # dart run script/add_builtin.dart > lib/builtin/maccms/maccms.dart
+      - name: Upload resolved lockfile
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolved-lockfile
+          path: pubspec.lock
       - name: Apply release version
         if: startsWith(github.ref, 'refs/tags/release-v')
         run: |

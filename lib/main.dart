@@ -5,8 +5,6 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:get/get.dart';
 import 'package:catmovie/isar/repo.dart';
-import 'package:catmovie/shared/auto_injector.dart';
-import 'package:hide_cursor/hide_cursor.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:protocol_handler/protocol_handler.dart';
 import 'package:window_manager/window_manager.dart';
@@ -53,7 +51,6 @@ Future<ThemeMode> runBefore() async {
   await XHttp.init();
   await IsarRepository().init();
   await SpiderManage.init();
-  registerAutoInjector();
   var currTheme = IsarRepository().settingsSingleModel.themeMode;
   Brightness wrapperIfDark = Brightness.light;
   if (currTheme.isDark) {
@@ -68,7 +65,6 @@ Future<ThemeMode> runBefore() async {
 
 void runAfter() {
   if (GetPlatform.isDesktop) {
-    hideCursor.showCursor();
     doWhenWindowReady(() {
       const minSize = Size(420, 420);
       appWindow.minSize = minSize;
