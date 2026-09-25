@@ -154,6 +154,8 @@ jobs:
           fi
           dart run script/replace_version.dart
       - name: Build android apk
+        id: android_build
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         # flutter build apk --target-platform android-arm,android-arm64,android-x64 --split-per-abi
         run: |
           # dart run script/add_builtin.dart > lib/builtin/maccms/maccms.dart
@@ -161,6 +163,7 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk catmovie.apk
 
       - name: Upload Android APK
+        if: steps.android_build.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
@@ -168,6 +171,8 @@ jobs:
           if-no-files-found: error
 
       - name: Build unsigned iOS IPA
+        id: ios_build
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: |
           flutter build ios --release --no-codesign -v
           cd build/ios/iphoneos
@@ -176,6 +181,7 @@ jobs:
           zip -qry catmovie.ipa Payload
 
       - name: Upload unsigned iOS IPA
+        if: steps.ios_build.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: ios-unsigned
@@ -183,6 +189,8 @@ jobs:
           if-no-files-found: error
 
       - name: Build macOS
+        id: macos_build
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
         run: |
           flutter config --enable-macos-desktop
           flutter build macos --release -v
@@ -190,11 +198,20 @@ jobs:
           zip -qry catmovie-mac.zip ./*.app
 
       - name: Upload macOS app
+        if: steps.macos_build.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: macos
           path: build/macos/Build/Products/Release/catmovie-mac.zip
           if-no-files-found: error
+
+      - name: Verify all platform builds
+        if: always() && github.event_name == 'pull_request'
+        run: |
+          echo "Android: ${{ steps.android_build.outcome }}"
+          echo "iOS: ${{ steps.ios_build.outcome }}"
+          echo "macOS: ${{ steps.macos_build.outcome }}"
+          test "${{ steps.android_build.outcome }} ${{ steps.ios_build.outcome }} ${{ steps.macos_build.outcome }}" = "success success success"
 
       - uses: actions/download-artifact@v4
         if: startsWith(github.ref, 'refs/tags/release-v')
