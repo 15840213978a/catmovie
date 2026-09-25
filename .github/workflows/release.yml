@@ -21,7 +21,7 @@ env:
 jobs:
 
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
       - uses: actions/checkout@v5
@@ -38,12 +38,6 @@ jobs:
           dart run build_runner build --delete-conflicting-outputs
           flutter test
           # dart run script/add_builtin.dart > lib/builtin/maccms/maccms.dart
-      - name: Upload resolved lockfile
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: resolved-lockfile
-          path: pubspec.lock
       - name: Apply release version
         if: startsWith(github.ref, 'refs/tags/release-v')
         run: |
