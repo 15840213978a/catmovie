@@ -131,19 +131,6 @@ context.id = 'rePlaylist'
 action.id = 'reAction'
 mask.id = 'reMask'
 
-function sendMessage(type, value) {
-  fetch(`/internal_msg`, {
-    method: "POST",
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      type,
-      value: JSON.stringify(value)
-    })
-  })
-}
-
 /**
  * @param {string} text 
  */
@@ -178,14 +165,7 @@ function setPlaylist(list) {
       setActionText(item.title)
       setActiveWithPlaylist(url)
       togglePlaylist(false)
-      sendMessage('switchVideo', url)
-      const iframe = document.querySelector('#iframe')
-      if (iframe) {
-        iframe.src = url
-        return
-      }
-      player.seek(0)
-      player.switchVideo({ url })
+      window.location.assign(url)
     })
     wrapperDiv.append(itemElement)
   })
