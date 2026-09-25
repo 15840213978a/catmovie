@@ -23,6 +23,8 @@ import 'package:tuple/tuple.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:xi/xi.dart';
 
+const _kAutoHideCursorDuration = Duration(seconds: 3);
+
 // https://github.com/hoangnx2204/m3u_utils
 class M3uUtils {
   static Tuple2<String, String> beautiProp(String propInput) {
@@ -410,7 +412,7 @@ class TVUIState extends State<TVUI>
   void autoHideCursor() {
     if (GetPlatform.isMobile) return;
     _autoHideCursorTimer?.cancel();
-    _autoHideCursorTimer = Timer(kAutoHideCursorDuration, () {
+    _autoHideCursorTimer = Timer(_kAutoHideCursorDuration, () {
       _hideCursor();
     });
   }
